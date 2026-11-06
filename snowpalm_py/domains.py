@@ -10,10 +10,10 @@ def domains(Domain: str) -> tuple[ulx: float,
 								demfile: str]:
 	# Input:
 	# Output: tuple
-		# ulx: upper left X coordinate
-		# uyl: upper right Y coordinate
-		# lrx: lower right X coordinate
-		# lry: lower right y coordinate
+		# ulx: upper left X coordinate (longitude)
+		# uyl: upper right Y coordinate (latitude)
+		# lrx: lower right X coordinate (longitude)
+		# lry: lower right y coordinate (latitude)
 		# outdir: directory for outputs
 		# dem: path to DEM data file
 	print(f"Domain = {Domain}")
@@ -27,6 +27,8 @@ def domains(Domain: str) -> tuple[ulx: float,
 	
 	# Forcing domains (download areas that are larger than, or encompass multiple indivudal snowPALM domains
 	# TODO: currently only uses one forcing domain (?) (from default in snowPALM) for Valles
+	
+	# Bounding box lat/lon coordinates (Northwest to Southeast corner) for the Valles Caldera region
 	all_domains = [
 		{
 			"name": "Valles",

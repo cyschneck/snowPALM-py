@@ -23,17 +23,16 @@ if __name__ == "__main__":
 	print(f"EarthAccess:\n\tUsername: {os.environ['EARTHDATA_USERNAME']}\n\tPassword: {os.environ['EARTHDATA_PASSWORD']}")
 	
 	# 3. User inputs
-	# Inputs: TO BE MOVED TO CONFIG FILE (TODO)
+	# Inputs: TO BE MOVED TO A CONFIGURATION (?) FILE (TODO)
 	output_directory = "testing_outputs/" # local directory where forcing data will be stored
-	domain = "Valles"
-	# make output directory
-	Path(output_directory).mkdir(parents=True, exist_ok=True) # make if does not exist
+	Path(output_directory).mkdir(parents=True, exist_ok=True) # make output directory if does not exist
 
 	# 4.
 	# define forcing data domains
+	domain = "Valles"
 	domains_result = snowpalm.domains(Domain=domain)
 	print(domains_result)
 
 	# 5.
 	# Download Data
-	snowpalm.get_prism_corrected_nldas('CO_NM',1,2013,12,2013)
+	snowpalm.get_prism_corrected_nldas("CO_NM",12,2013,12,2013)

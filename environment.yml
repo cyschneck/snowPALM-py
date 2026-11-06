@@ -3,5 +3,10 @@ channels:
   - conda-forge
 dependencies:
   - python>=3.12,<3.15  # minimum support 3.12, maximum support 3.14
-  - earthaccess # NASA: EarthAccess for data
-  - xarray # working with netCDF data
+  - earthaccess         # NASA: EarthAccess for data
+  - xarray              # working with netCDF data
+  - dask                # Optimizes chunks and parallel processing
+  - netcdf4             # Required for reading/writing NetCDF files
+  - h5netcdf            # Required for reading/writing NetCDF files
+  - bottleneck          # Accelerates NaN-skipping array operations
+  - scipy               # Required for interpolation and advanced math
