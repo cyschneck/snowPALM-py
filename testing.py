@@ -12,4 +12,5 @@ if __name__ == "__main__":
 	Path(output_directory).mkdir(parents=True, exist_ok=True) # make if does not exist
 
 	# define forcing data domains
-	snowpalm.domains(Domain=domain)
+	domains_result = snowpalm.domains(Domain=domain)
+	print(domains_result)

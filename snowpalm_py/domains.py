@@ -17,7 +17,8 @@ def domains(Domain: str) -> tuple[ulx: float,
 		# outdir: directory for outputs
 		# dem: path to DEM data file
 	print(f"Domain = {Domain}")
-	demfile = "data/US_DEM.tif"
+	demfile = "data/US_DEM.tif" # TODO: move into CONF file
+	outdir = "testing_outputs/" # TODO: move into CONF file
 	
 	# DEM file: to be used along with the forcing data (will be reprojected)
 	if not Path(demfile).is_file():
@@ -25,7 +26,7 @@ def domains(Domain: str) -> tuple[ulx: float,
 	print(f"DEM file: {demfile}")
 	
 	# Forcing domains (download areas that are larger than, or encompass multiple indivudal snowPALM domains
-	# TODO: currently only uses one forcing domain (from default in snowPALM) for Valles
+	# TODO: currently only uses one forcing domain (?) (from default in snowPALM) for Valles
 	all_domains = [
 		{
 			"name": "Valles",
@@ -47,3 +48,5 @@ def domains(Domain: str) -> tuple[ulx: float,
 			lry = domain["lry"]
 	if not forcing_domain_found:
 		print(f"No forcing domain called on {Domain}")
+
+	return ulx, uly, lrx, lry, outdir, demfile
