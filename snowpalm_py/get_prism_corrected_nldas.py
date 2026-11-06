@@ -51,6 +51,20 @@ def get_prism_corrected_nldas(domain="",
 		# 0100:      <HH>00 for GMT Hour of the day
 		# 020:       data version 2 for NLDAS Phase 2
 		# .nc:       netCDF file format
+		
+		# Forcing hourly data:
+		# Tair: 2-meter above ground temperature
+		# Qair: 2-meter above ground specific humidity
+		# PSurf: surface pressure
+		# Wind_E: 10-meter aboveground zonal wind speed
+		# Wind_N: 10-meter aboveground meridional wind speed
+		# LWdown: longwave radiationflux downwards
+		# CRainf##: Convective precipitation
+		# CAPE: Convective Available Potential Energy
+		# PotEvap: Potential evaporation
+		# Rainf: Total precipitation
+		# SWdown: Shortwave radiation flux downwards
+		
 	
 		# Description: This data set contains the primary forcing hourly data "File A" for Phase 2 of the North American Land Data Assimilation System (NLDAS-2). The data are in 1/8th degree grid spacing and range from Jan 1979 to the present. The temporal resolution is hourly
 		# DOI location: https://doi.org/10.5067/THUF4J1RLSYG
@@ -71,5 +85,6 @@ def get_prism_corrected_nldas(domain="",
 		print(NLDAS_results)
 		
 		NLDAS_files = earthaccess.open(NLDAS_results)
-		ds = xr.open_mfdataset(NLDAS_files)#, chunks={"time": 12})
-		print(ds)
+		ds = xr.open_mfdataset(NLDAS_files, chunks={"time": 12})
+		snowpalm.plot_nldas_data(ds)
+		
