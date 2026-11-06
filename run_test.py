@@ -1,5 +1,6 @@
 import snowpalm_py as snowpalm
 
+import os
 import configparser # reads config.ini
 from pathlib import Path
 import shutil
@@ -17,9 +18,9 @@ if __name__ == "__main__":
 	# Edit with data for EarthAccess credetials
 	config = configparser.ConfigParser()
 	config.read("config.ini")
-	earthaccess_username = config["earthaccess"]["username"]
-	earthaccess_password = config["earthaccess"]["password"]
-	print(f"EarthAccess:\n\tUsername: {earthaccess_username}\n\tPassword: {earthaccess_password}")
+	os.environ["EARTHDATA_USERNAME"] = config["earthaccess"]["username"]
+	os.environ["EARTHDATA_PASSWORD"] = config["earthaccess"]["password"]
+	print(f"EarthAccess:\n\tUsername: {os.environ['EARTHDATA_USERNAME']}\n\tPassword: {os.environ['EARTHDATA_PASSWORD']}")
 	
 	# 3. User inputs
 	# Inputs: TO BE MOVED TO CONFIG FILE (TODO)
@@ -32,3 +33,7 @@ if __name__ == "__main__":
 	# define forcing data domains
 	domains_result = snowpalm.domains(Domain=domain)
 	print(domains_result)
+
+	# 5.
+	# Download Data
+	snowpalm.get_prism_corrected_nldas('CO_NM',1,2013,12,2013)

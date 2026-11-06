@@ -10,5 +10,9 @@ password=REPLACE_WITH_PASSWORD
 ```
 This file will be created by default from the `config.example.ini` file, but not tracked in this repo
 
+[Register for free Earthdata login (EDL) account](https://urs.earthdata.nasa.gov/)
+
 ## Data
 - `data/US_DEM.tf`: Digital Elevation Model (DEM) raster file for the United States as a TIFF file (copied from snowPALM)
+
+Data downloaded from EarthAccess will be saved to the `testing_outputs`, but ignored in `.gitignore`
