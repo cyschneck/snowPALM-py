@@ -35,4 +35,11 @@ if __name__ == "__main__":
 
 	# 5.
 	# Download Data
-	snowpalm.get_prism_corrected_nldas("CO_NM",12,2013,12,2013)
+	snowpalm.get_prism_corrected_nldas(domain="CO_NM",
+									start_month=12,
+									start_day=1,
+									start_year=2013,
+									end_month=12,
+									end_day=1,
+									end_year=2013
+									)

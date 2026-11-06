@@ -5,26 +5,27 @@ from earthaccess.exceptions import LoginAttemptFailure
 import xarray as xr
 
 
-def get_prism_corrected_nldas(domain="",
-							start_month="",
-							start_year="",
-							end_month="",
-							end_year=""):
+def get_prism_corrected_nldas(domain=None,
+							start_year=None,
+							start_month=None,
+							start_day=1,
+							end_year=None,
+							end_month=None,
+							end_day=1):
 	# Download and process PRISM-corrected NLDS forcing data
 	# Input:
 		# Domain: A region defined in "domains.py" for which to download forcing data for
 		# start_month: month of starting date
 		# start_year:  year of starting date
+		# start_day:  date of starting date (default to start of the month)
 		# end_month:   month of ending date
 		# end_year:    year of ending date
+		# end_day:    date of ending date (default to the start of the month)
 	
 	# Example: get_prism_corrected_nldas('CO_NM',1,2013,12,2013)
 	print("\nget_prism_corrected_nldas()")
 	print(f"Domain: {domain}")
-	print(f"start_month: {start_month}")
-	print(f"start_year: {start_year}")
-	print(f"end_month: {end_month}")
-	print(f"end_year: {end_year}")
+	print(f"DATES: From {start_year}-{start_month}-{start_day} to {end_year}-{end_month}-{end_day}")
 	
 	# Login to Earthdata
 	try:
@@ -71,20 +72,22 @@ def get_prism_corrected_nldas(domain="",
 		# Current location: https://www.earthdata.nasa.gov/data/catalog/ges-disc-nldas-fora0125-h-2.0
 		# Data details: https://docserver.gesdisc.eosdis.nasa.gov/public/project/hydrology/NLDAS2_README.pdf
 		valles_domain = snowpalm.domains(Domain="Valles")
-
 		print(valles_domain)
+
+		# Access data via EarthAccess
 		NLDAS_results = earthaccess.search_data(short_name="NLDAS_FORA0125_H",
 												version="2.0",
-												temporal=(f"{start_year}-{start_month}-01", f"{end_year}-{end_month}-01"),
-												bounding_box=(valles_domain[2], valles_domain[3], valles_domain[0], valles_domain[1]),
-												count=1) # TODO: count only collects one file
+												temporal=(f"{start_year}-{start_month}-{start_day}", f"{end_year}-{end_month}-{end_day}"),
+												bounding_box=(valles_domain[2], valles_domain[3], valles_domain[0], valles_domain[1]))
+												#,count=1) # TODO: count only collects one file
 	
 		total_download_size = sum([nldas_file.size for nldas_file in NLDAS_results]) / 1024
 		print(f"Total size for {len(NLDAS_results)} files found: {total_download_size:.2f} GB")
-		
-		print(NLDAS_results)
-		
+				
 		NLDAS_files = earthaccess.open(NLDAS_results)
-		ds = xr.open_mfdataset(NLDAS_files, chunks={"time": 12})
-		snowpalm.plot_nldas_data(ds)
+		ds_files = xr.open_mfdataset(NLDAS_files, chunks={"time": 12})
+		print(f"\nData represents {len(NLDAS_results)} hours of hourly NLDAS data")
+		print(f"Data files variables: {list(ds_files.data_vars)}")
+		print(f"Data Dimensions: {ds_files.sizes}")
+		#snowpalm.plot_nldas_data(ds_files) # plot to view data
 		
