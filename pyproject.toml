@@ -1,0 +1,41 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+
+requires = [ "setuptools" ]
+
+[project]
+name = "snowPALM-py"
+version = ""
+description = ""
+readme = "README.md"
+keywords = []
+
+license = "MIT"
+authors = []
+
+requires-python = ">=3.12"
+
+classifiers = [
+  "Intended Audience :: Developers",
+  "Intended Audience :: Education",
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3 :: Only",
+  "Topic :: Scientific/Engineering :: Hydrology",
+  "Topic :: Scientific/Engineering :: Physics",
+]
+
+dependencies = []
+
+optional-dependencies.dev = []
+
+urls.Issues = "https://github.com/cyschneck/snowPALM-py/issues"
+urls.Repository = "https://github.com/cyschneck/snowPALM-py"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = [ "." ]
+include = [ "snowPALM_py" ]
+exclude = [ "snowPALM_py/pytests*" ]
