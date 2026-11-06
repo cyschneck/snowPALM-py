@@ -11,5 +11,5 @@ def get_prism_corrected_nldas(domain="",
 		# end_month:   month of ending date
 		# end_year:    year of ending date
 	
-	# Output:
+	# Example: get_prism_corrected_nldas('CO_NM',1,2013,12,2013)
 	pass

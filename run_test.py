@@ -1,10 +1,18 @@
 import snowpalm_py as snowpalm
 
+import configparser # reads config.ini
 from pathlib import Path
 
 
 if __name__ == "__main__":
-	# Inputs: TO BE MOVED TO CONF FILE (TODO)
+	# CONFIGURATIONS
+	config = configparser.ConfigParser()
+	config.read("config.ini")
+	earthaccess_username = config["earthaccess"]["username"]
+	earthaccess_password = config["earthaccess"]["password"]
+	print(f"EarthAccess:\n\tUsername: {earthaccess_username}\n\tPassword: {earthaccess_password}")
+	
+	# Inputs: TO BE MOVED TO CONFIG FILE (TODO)
 	output_directory = "testing_outputs/" # local directory where forcing data will be stored
 	domain = "Valles"
 
