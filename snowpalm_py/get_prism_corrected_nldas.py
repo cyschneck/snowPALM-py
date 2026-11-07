@@ -7,6 +7,7 @@ import numpy as np
 import rasterio
 
 from pathlib import Path
+import os
 
 def get_prism_corrected_nldas(domain=None,
 							start_year=None,
@@ -74,7 +75,8 @@ def get_prism_corrected_nldas(domain=None,
 		# DOI location: https://doi.org/10.5067/THUF4J1RLSYG
 		# Current location: https://www.earthdata.nasa.gov/data/catalog/ges-disc-nldas-fora0125-h-2.0
 		# Data details: https://docserver.gesdisc.eosdis.nasa.gov/public/project/hydrology/NLDAS2_README.pdf
-		valles_domain = snowpalm.domains(Domain="Valles")
+		Domain="Valles"
+		valles_domain = snowpalm.domains(Domain=Domain)
 		ulx = valles_domain[0]
 		uly = valles_domain[1]
 		lrx = valles_domain[2]
@@ -143,6 +145,31 @@ def get_prism_corrected_nldas(domain=None,
 		
 		# transpose and flip DEM file
 		Z = np.fliplr(dem_sub.T)
+		
+		## write DEM, latitude, longitude data to new netCDF
+		name = f"prism_correct_nldas_{Domain}"
+		print(f"\nWrite new netCDF: {name}")
+		
+		# collect lat/lon data, sliced based on domain
+		lat_data = lat[locy].astype("float32")
+		lon_data = lon[locx].astype("float32")
+		
+		# transpose elevation data to match latitude as rows and longitude as columns
+		elev_data = Z.T.astype("float32")
+		
+		nc_ds = xr.Dataset(
+							data_vars={"Elev": (["lat", "lon"], elev_data, {"units": "meters"})},
+							coords={
+								"lat": (["lat"], lat_data, {"units": "degrees_north"}),
+								"lon": (["lon"], lon_data, {"units": "degrees_east"}),
+								}
+							)
+		
+		ncfile = Path(output_dir) / name / "dem.nc"
+		ncfile.parent.mkdir(parents=True, exist_ok=True) # ensure parent directory exists for .nc file
+		nc_ds.to_netcdf(ncfile)
+		print(f"netCDF file 'dem.nc' saved to {output_dir}")
+		
 			
 		# Download PRISM data
 		# URL: https://prism.oregonstate.edu/downloads/
