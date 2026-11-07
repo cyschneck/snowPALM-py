@@ -12,3 +12,5 @@ dependencies:
   - scipy               # interpolation and advanced math
   - matplotlib          # plotting
   - cartopy             # plotting
+  - rasterio            # resampling DEM file
+  - numpy

@@ -3,7 +3,10 @@ import snowpalm_py as snowpalm
 import earthaccess
 from earthaccess.exceptions import LoginAttemptFailure
 import xarray as xr
+import numpy as np
+import rasterio
 
+from pathlib import Path
 
 def get_prism_corrected_nldas(domain=None,
 							start_year=None,
@@ -72,22 +75,80 @@ def get_prism_corrected_nldas(domain=None,
 		# Current location: https://www.earthdata.nasa.gov/data/catalog/ges-disc-nldas-fora0125-h-2.0
 		# Data details: https://docserver.gesdisc.eosdis.nasa.gov/public/project/hydrology/NLDAS2_README.pdf
 		valles_domain = snowpalm.domains(Domain="Valles")
+		ulx = valles_domain[0]
+		uly = valles_domain[1]
+		lrx = valles_domain[2]
+		lry = valles_domain[3]
+		output_dir = valles_domain[4]
+		demfile = valles_domain[5]
 		print(valles_domain)
 
 		# Access data via EarthAccess
 		NLDAS_results = earthaccess.search_data(short_name="NLDAS_FORA0125_H",
 												version="2.0",
 												temporal=(f"{start_year}-{start_month}-{start_day}", f"{end_year}-{end_month}-{end_day}"),
-												bounding_box=(valles_domain[2], valles_domain[3], valles_domain[0], valles_domain[1]))
+												bounding_box=(lrx, lry, ulx, uly))
 												#,count=1) # TODO: count only collects one file
 	
 		total_download_size = sum([nldas_file.size for nldas_file in NLDAS_results]) / 1024
 		print(f"Total size for {len(NLDAS_results)} files found: {total_download_size:.2f} GB")
 				
 		NLDAS_files = earthaccess.open(NLDAS_results)
-		ds_files = xr.open_mfdataset(NLDAS_files, chunks={"time": 12})
+		nldas_ds = xr.open_mfdataset(NLDAS_files, chunks={"time": 12})
 		print(f"\nData represents {len(NLDAS_results)} hours of hourly NLDAS data")
-		print(f"Data files variables: {list(ds_files.data_vars)}")
-		print(f"Data Dimensions: {ds_files.sizes}")
-		#snowpalm.plot_nldas_data(ds_files) # plot to view data
+		print(f"Data files variables: {list(nldas_ds.data_vars)}")
+		print(f"Data Dimensions: {nldas_ds.sizes}")
+
+		#snowpalm.plot_nldas_data(nldas_ds) # plot to view data
+		
+		# Cut out and resize the DEM to the correct dimensions
+		print(f"\nDEM file: {demfile}")
+		
+		lat = nldas_ds["lat"].values
+		lon = nldas_ds["lon"].values
+		print((len(lat), len(lon)))
+		
+		# boolean mask
+		locx = (lon > ulx) & (lon < lrx)
+		locy = (lat > lry) & (lat < uly)
+		
+		# grid size
+		sz = (np.sum(locy).item(), np.sum(locx).item())
+
+		with rasterio.open(demfile) as dem_src:
+			# bounding window based on coordinates from domain
+			bounding_window = rasterio.windows.from_bounds(left=ulx,
+														bottom=lry,
+														right=lrx,
+														top=uly,
+														transform=dem_src.transform)
+			# crop and resize
+			dem_sub = dem_src.read(1,
+								window=bounding_window,
+								out_shape=(sz[1], sz[0]),
+								resampling=rasterio.enums.Resampling.bilinear)
+
+			# update metadata
+			kwargs = dem_src.meta.copy()
+			kwargs.update({
+							"height": sz[1],
+							"width": sz[0],
+							"transform": rasterio.windows.transform(bounding_window, dem_src.transform)
+							})
+
+			# save updated DEM
+			with rasterio.open("testing_outputs/dem_sub.tif", "w", **kwargs) as dem_out:
+				dem_out.write(dem_sub, 1)
+				print("Writing: testing_outputs/dem_sub.tif")
+		
+		# transpose and flip DEM file
+		Z = np.fliplr(dem_sub.T)
+			
+		# Download PRISM data
+		# URL: https://prism.oregonstate.edu/downloads/
+		# Web service details: https://prism.oregonstate.edu/documents/PRISM_downloads_web_service.
+		# https://data.prism.oregonstate.edu/time_series/us/an/4km/ppt/monthly/
+		
+		
+		
 		
