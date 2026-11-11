@@ -73,14 +73,14 @@ def plot_prism_data(prism_data_file=None):
 	
 	# files within zip file
 	internal_rasterio_file = None
-	with zipfile.ZipFile(f"testing_outputs/PRISM_data/{prism_data_file}", "r") as z:
+	with zipfile.ZipFile(prism_data_file, "r") as z:
 		for zip_file in z.infolist():
 			if str(zip_file.filename).split(".")[-1] in ["bil", "tif", "asc"]:
 				print(zip_file.filename)
 				internal_rasterio_file = zip_file.filename
 	print(internal_rasterio_file)
 	
-	zip_path = f"zip://testing_outputs/PRISM_data/{prism_data_file}!{internal_rasterio_file}"
+	zip_path = f"zip://{prism_data_file}!{internal_rasterio_file}"
 	with rasterio.open(zip_path) as prism_src:
 		print(f"Dimensions: {prism_src.width} by {prism_src}")
 		print(f"Bands: {prism_src.count}")
@@ -93,9 +93,14 @@ def plot_prism_data(prism_data_file=None):
 
 	# 4. Plot the extracted raster map
 	plt.figure(figsize=(8, 8))
-	plt.imshow(ppt_array, cmap="Blues", extent=plotting_extent(prism_src))
-	plt.colorbar(label="Precipitation (mm)")
-	plt.title(f"PRISM Total Precipitation: {prism_data_file}")
+	if "ppt" in prism_data_file:
+		plt.title(f"PRISM Total Precipitation: {prism_data_file}")
+		plt.imshow(ppt_array, cmap="Blues", extent=plotting_extent(prism_src))
+		plt.colorbar(label="Precipitation (mm)")
+	if "tmean" in prism_data_file:
+		plt.title(f"PRISM Average Temperature: {prism_data_file}")
+		plt.imshow(ppt_array, cmap="Reds", extent=plotting_extent(prism_src))
+		plt.colorbar(label="Temperature (C)")
 	plt.xlabel("Longitude (Degree)")
 	plt.ylabel("Latitude (Degree)")
 	plt.grid(True, linestyle="--", alpha=0.5)

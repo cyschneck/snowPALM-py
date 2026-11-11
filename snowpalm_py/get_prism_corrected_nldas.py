@@ -5,11 +5,73 @@ from earthaccess.exceptions import LoginAttemptFailure
 import xarray as xr
 import numpy as np
 import rasterio
+import rioxarray
 
 from pathlib import Path
 import os
 from datetime import datetime, timezone
 import urllib.request
+import zipfile
+
+def collect_prism_rasterio_data(data_directory=None,
+								year=None,
+								month=None,
+								variable_data_type=None):
+	# collect PPT and TMEAN rasterio data
+	# variable_type = "ppt" or "tmean"
+	# ppt: precipitation
+	# tmean: Mean temperature
+	if variable_data_type not in ["ppt", "tmean"]:
+		print(f"INVALID DATA TYPE: {varaible_data_type}")
+	base_url = f"https://data.prism.oregonstate.edu/time_series/us/an/4km/{variable_data_type}/monthly/{year}/"
+	prism_data_file = f"prism_{variable_data_type}_us_25m_{year}{month}.zip"
+	prism_data_file_url = f"{base_url}/{prism_data_file}"
+	print(prism_data_file)
+	print(prism_data_file_url)
+			
+	# Define:
+	## PRISM takes spare, in-situ point data (i.e. rain gauges or SNOTEL) and transforms it into continuous high-resolution digital grid maps of climate variables (i.e. precipitation, max/min temperature, dew point, and vapor pressure)
+	## PRISM uses DEMs (digital elevation models) to account for complex terrain features (i.e. rain shadow, coastal proximity, temperature inversion, vertical atmospheric layers)
+	## PRISM applies locally varying, pixel-specific regression equations between climate parameters and elevation rather than a single uniform gradient across a region
+			
+	# PRISM: Parameter-elevation regression on independent slopes model (spatial interpolation model to calculate how climate variables change across landscapes, explicitly adjusting for terrian variables like elevation, coastal proximity, rain shadows, and atmospheric inversions)
+	# 25m: spatial grid resolution of 4 km with monthly (M) temporal frequency == 25m (2.5 archmin = 4km resolution)
+	# PRISM uses a folling 6 month backend to establish stable vs. provisional vs. early. Data < 1 month = early (subject to change). Data from 1 to 6 months = provisional (will change as more report are recieved). Data > 6 months (stable and unliekly to change until a new major model release)
+			
+	prism_file = f"{data_directory}/{prism_data_file}"
+	update_file = True
+	print(prism_file)
+	if Path(prism_file).is_file():
+		file_last_modified = datetime.fromtimestamp(Path(prism_file).stat().st_mtime, tz=timezone.utc)
+		file_age = datetime.now(timezone.utc) - file_last_modified
+		if file_age.days < 1:
+			# Adhere to Oregon State service's data limit:
+			## PRISM will potentially block an IP address which attempts to download the exact same file more than twice within 24 hours
+			print(f"IMPORTANT NOTE:\n\t{prism_file} has recently been downloaded, to prevent rate-limiting, wait at least 24 before attempting to download this file via this script.")
+			print(f"URL for direct download: \n\t{prism_data_file_url}")
+			update_file = False
+
+	if update_file:
+		print(f"Downloading: {prism_file}")
+		try:
+			urllib.request.urlretrieve(prism_data_file_url, prism_file)
+			print("Download complete")
+		except Exception as e:
+			print(f"Error in download: {e}")
+		
+	# plot PRISM data
+	snowpalm.plot_prism_data(prism_file)
+	print(prism_file)
+			
+	with zipfile.ZipFile(prism_file, "r") as z:
+		for zip_file in z.infolist():
+			if str(zip_file.filename).split(".")[-1] in ["tif"]:
+				data_tif = zip_file.filename
+
+	zip_path = f"zip://{prism_file}!{data_tif}"
+	print(zip_path)
+	prism_ds = rioxarray.open_rasterio(zip_path)
+	print(prism_ds)
 
 def get_prism_corrected_nldas(domain=None,
 							start_year=None,
@@ -192,43 +254,16 @@ def get_prism_corrected_nldas(domain=None,
 		prism_data_directory = "testing_outputs/PRISM_data"
 		Path(prism_data_directory).mkdir(parents=True, exist_ok=True) # make output directory if does not exist
 		print(f"\nCollect PRISM data to save in {prism_data_directory}")
-		base_url = "https://data.prism.oregonstate.edu/time_series/us/an/4km/ppt/monthly"
 		nc_monthyear_list = np.unique(nldas_ds["time"].dt.strftime("%m-%Y"))
 		for month_year in nc_monthyear_list:
 			month, year = month_year.split("-")
 			month = f"{int(month):02d}"
-			prism_data_file = f"prism_ppt_us_25m_{year}{month}.zip"
-			prism_data_file_url = f"{base_url}/{year}/{prism_data_file}"
-			print(prism_data_file)
-			print(prism_data_file_url)
 			
-			# Define:
-			## PRISM takes spare, in-situ point data (i.e. rain gauges or SNOTEL) and transforms it into continuous high-resolution digital grid maps of climate variables (i.e. precipitation, max/min temperature, dew point, and vapor pressure)
-			## PRISM uses DEMs (digital elevation models) to account for complex terrain features (i.e. rain shadow, coastal proximity, temperature inversion, vertical atmospheric layers)
-			## PRISM applies locally varying, pixel-specific regression equations between climate parameters and elevation rather than a single uniform gradient across a region
-			
-			# PRISM: Parameter-elevation regression on independent slopes model (spatial interpolation model to calculate how climate variables change across landscapes, explicitly adjusting for terrian variables like elevation, coastal proximity, rain shadows, and atmospheric inversions)
-			# tmean: Mean temperature
-			# stable: data stability is finalized (at least 6 months old) and will not change (stable vs. provisional)
-			# 4kmM: spatial grid resolution of 4 km with monthly (M) temporal frequency == 25m (2.5 archmin = 4km resolution)
-			# ppt: precipitation
-		
-			# Adhere to Oregon State service's data limit
-			# PRISM will potentially block an IP address which attempts to download the exact same file more than twice within 24 hours
-			prism_file = f"{prism_data_directory}/{prism_data_file}"
-			if Path(prism_file).is_file():
-				file_last_modified = datetime.fromtimestamp(Path(prism_file).stat().st_mtime, tz=timezone.utc)
-				file_age = datetime.now(timezone.utc) - file_last_modified
-				if file_age.days < 1:
-					print(f"IMPORTANT NOTE:\n\t{prism_data_file} has recently been downloaded, to prevent rate-limiting, wait at least 24 before attempting to download this file via this script.")
-					print(f"\tURL for direct download: \n\t{prism_data_file_url}")
-			else:
-				print(f"Downloading: {prism_data_file}")
-				try:
-					urllib.request.urlretrieve(prism_data_file_url, f"{prism_data_directory}/{prism_data_file}")
-					print("Download complete")
-				except Exception as e:
-					print(f"Error in download: {e}")
-			
-			# plot PRISM data
-			#snowpalm.plot_prism_data(prism_data_file)
+			collect_prism_rasterio_data(data_directory=prism_data_directory,
+										year=year,
+										month=month,
+										variable_data_type="ppt")
+			collect_prism_rasterio_data(data_directory=prism_data_directory,
+										year=year,
+										month=month,
+										variable_data_type="tmean")
