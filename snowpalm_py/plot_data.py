@@ -71,6 +71,16 @@ def plot_nldas_data(ds=None):
 def plot_prism_data(prism_data_file=None):
 	print(f"plot data: {prism_data_file}")
 	
+	# check if PPT or TMEAN data
+	if "ppt" in prism_data_file:
+		data_name = "Precipitation"
+		data_color = "Blues"
+		data_units = "(mm)"
+	if "tmean" in prism_data_file:
+		data_name = "Average Temperature"
+		data_color = "Reds"
+		data_units = "(C)"
+	
 	# files within zip file
 	internal_rasterio_file = None
 	with zipfile.ZipFile(prism_data_file, "r") as z:
@@ -88,19 +98,14 @@ def plot_prism_data(prism_data_file=None):
 		print(f"Transform by Bounds/Resolution: {prism_src.transform}")
 		ppt_array = prism_src.read(1, masked=True)
 
-	print(f"Max Precipitation: {ppt_array.max():.2f} mm")
-	print(f"Mean Precipitation: {ppt_array.mean():.2f} mm")
+	print(f"Max {data_name}: {ppt_array.max():.2f} mm")
+	print(f"Mean {data_name}: {ppt_array.mean():.2f} mm")
 
 	# 4. Plot the extracted raster map
 	plt.figure(figsize=(8, 8))
-	if "ppt" in prism_data_file:
-		plt.title(f"PRISM Total Precipitation: {prism_data_file}")
-		plt.imshow(ppt_array, cmap="Blues", extent=plotting_extent(prism_src))
-		plt.colorbar(label="Precipitation (mm)")
-	if "tmean" in prism_data_file:
-		plt.title(f"PRISM Average Temperature: {prism_data_file}")
-		plt.imshow(ppt_array, cmap="Reds", extent=plotting_extent(prism_src))
-		plt.colorbar(label="Temperature (C)")
+	plt.title(f"PRISM {data_name}:\n{prism_data_file}")
+	plt.imshow(ppt_array, cmap=data_color, extent=plotting_extent(prism_src))
+	plt.colorbar(label=f"{data_name} {data_units}")
 	plt.xlabel("Longitude (Degree)")
 	plt.ylabel("Latitude (Degree)")
 	plt.grid(True, linestyle="--", alpha=0.5)
